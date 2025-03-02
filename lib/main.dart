@@ -56,11 +56,11 @@ class _InputFieldState extends State<InputField> {
           child: Center(
             child: showQR
                 ? Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.black,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.greenAccent.withValues(),
+                    color: Colors.greenAccent,
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),
@@ -69,7 +69,6 @@ class _InputFieldState extends State<InputField> {
               padding: const EdgeInsets.all(20),
               child: QrImageView(
                 data: enteredText,
-                version: QrVersions.auto,
                 size: 300,
                 backgroundColor: Colors.black,
                 eyeStyle: const QrEyeStyle(
