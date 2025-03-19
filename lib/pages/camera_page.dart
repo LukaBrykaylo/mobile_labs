@@ -46,7 +46,7 @@ class CameraPage extends StatelessWidget {
                         child: Container(
                           height: 220,
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
+                            color: Colors.black54,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.white, width: 0.5),
                           ),
@@ -57,7 +57,7 @@ class CameraPage extends StatelessWidget {
                                   width: 100,
                                   height: 100,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
+                                    color: Colors.white24,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.white,
                                         width: 0.5,),

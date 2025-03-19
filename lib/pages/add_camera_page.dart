@@ -44,7 +44,7 @@ class AddCameraPageState extends State<AddCameraPage> {
                   child: Container(
                     height: 150,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: Colors.black54,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white, width: 0.5),
                     ),
@@ -91,7 +91,7 @@ class AddCameraPageState extends State<AddCameraPage> {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Colors.black54,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white30, width: 0.5),
                       ),

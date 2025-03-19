@@ -34,14 +34,14 @@ class ProfilePage extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black12,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
+                        const BoxShadow(
+                          color: Colors.black54,
                           blurRadius: 10,
                           spreadRadius: 2,
-                          offset: const Offset(0, 4),
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
