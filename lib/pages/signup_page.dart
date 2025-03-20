@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({super.key});
+
+  final storage = const FlutterSecureStorage();
+
+  Future<void> _saveLogin(BuildContext context) async {
+    await storage.write(key: 'login', value: 'yes');
+    if (!context.mounted) return;
+    Navigator.pushNamed(context, '/tabs');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +56,7 @@ class SignUpPage extends StatelessWidget {
                 const SizedBox(height: 20),
                 CustomButton(
                   text: 'Sign Up',
-                  onTap: () => Navigator.pushNamed(context, '/tabs'),
+                  onTap: () => _saveLogin(context),
                 ),
               ],
             ),

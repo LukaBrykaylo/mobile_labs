@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
+  final storage = const FlutterSecureStorage();
+
+  Future<void> _resetLogin(BuildContext context) async {
+    await storage.write(key: 'login', value: 'no');
+    if (!context.mounted) return;
+    Navigator.pushNamed(context, '/');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +33,7 @@ class ProfilePage extends StatelessWidget {
                     child: IconButton(
                       icon: const Icon(Icons.logout, color: Colors.white,
                           size: 28,),
-                      onPressed: () => Navigator.pushNamed(context, '/'),
+                      onPressed: () => _resetLogin(context),
                     ),
                   ),
                 ),
