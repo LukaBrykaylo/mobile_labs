@@ -12,7 +12,6 @@ class AddCameraPage extends StatefulWidget {
 class AddCameraPageState extends State<AddCameraPage> {
   void _addCamera() {
     setState(() {
-      //TODO: camera adding (this is test)
       widget.cameraNames.add('Camera ${widget.cameraNames.length + 1}');
     });
   }
@@ -21,6 +20,43 @@ class AddCameraPageState extends State<AddCameraPage> {
     setState(() {
       widget.cameraNames.removeAt(index);
     });
+  }
+
+  Widget _buildCameraItem(String name, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white30, width: 0.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(name, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          IconButton(
+            icon: const Icon(Icons.clear, color: Colors.deepOrange),
+            onPressed: () => _removeCamera(index),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCameraList() {
+    if (widget.cameraNames.isEmpty) {
+      return const Center(
+        child: Text('No connected cameras',
+            style: TextStyle(color: Colors.white70, fontSize: 18),),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: widget.cameraNames.length,
+      itemBuilder: (context, index) =>
+          _buildCameraItem(widget.cameraNames[index], index),
+    );
   }
 
   @override
@@ -49,11 +85,7 @@ class AddCameraPageState extends State<AddCameraPage> {
                       border: Border.all(color: Colors.white, width: 0.5),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 60,
-                      ),
+                      child: Icon(Icons.add, color: Colors.white, size: 60),
                     ),
                   ),
                 ),
@@ -63,59 +95,16 @@ class AddCameraPageState extends State<AddCameraPage> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Connected Cameras:',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
+                  child: Text('Connected Cameras:',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.5,),),
                 ),
               ),
               const SizedBox(height: 10),
-              Expanded(
-                child: widget.cameraNames.isEmpty
-                    ? const Center(
-                  child: Text(
-                    'No connected cameras',
-                    style: TextStyle(color: Colors.white70, fontSize: 18),
-                  ),
-                )
-                    : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: widget.cameraNames.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white30, width: 0.5),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            widget.cameraNames[index],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.clear,
-                                color: Colors.deepOrange,),
-                            onPressed: () => _removeCamera(index),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+              Expanded(child: _buildCameraList()),
             ],
           ),
         ],
