@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/signup_validation_service.dart';
-import 'package:mobile_labs/service/storage_service.dart';
+import 'package:provider/provider.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -12,8 +12,6 @@ class SignUpPage extends StatefulWidget {
 }
 
 class SignUpPageState extends State<SignUpPage> {
-  final IAuthService authService = AuthService(SecureStorageService());
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -26,6 +24,8 @@ class SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<IAuthService>(context, listen: false);
+
     return Scaffold(
       body: Stack(
         children: [

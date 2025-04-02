@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_labs/elements/widget/settings_popup.dart';
 import 'package:mobile_labs/service/auth_service.dart';
-import 'package:mobile_labs/service/storage_service.dart';
+import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -11,7 +11,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
-  final IAuthService _authService = AuthService(SecureStorageService());
   String? _name, _email;
 
   @override
@@ -21,7 +20,8 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserInfo() async {
-    final userInfo = await _authService.getUserInfo();
+    final authService = Provider.of<IAuthService>(context, listen: false);
+    final userInfo = await authService.getUserInfo();
     setState(() {
       _name = userInfo['name'];
       _email = userInfo['email'];
@@ -30,12 +30,15 @@ class ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<IAuthService>(context, listen: false);
+
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('lib/elements/photos/background_small.jpg',
-                fit: BoxFit.cover,),
+              child: Image.asset('lib/elements/photos/background_small.jpg',
+                  fit: BoxFit.cover,
+              ),
           ),
           Column(
             children: [
@@ -47,16 +50,19 @@ class ProfilePageState extends State<ProfilePage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.settings,
-                            color: Colors.white, size: 28,),
+                            color: Colors.white, size: 28,
+                        ),
                         onPressed: () => showDialog<void>(
                             context: context,
                             barrierColor: Colors.transparent,
-                            builder: (_) => const SettingsPopup(),),
+                            builder: (_) => const SettingsPopup(),
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.logout,
-                            color: Colors.white, size: 28,),
-                        onPressed: () => _authService.logOut(context),
+                            color: Colors.white, size: 28,
+                        ),
+                        onPressed: () => authService.logOut(context),
                       ),
                     ],
                   ),
@@ -104,7 +110,9 @@ class ProfilePageState extends State<ProfilePage> {
             style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
-                fontWeight: FontWeight.bold,),),
+                fontWeight: FontWeight.bold,
+            ),
+        ),
       ],
     );
   }

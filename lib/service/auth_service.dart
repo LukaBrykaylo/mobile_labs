@@ -1,53 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_labs/service/storage_service.dart';
 
-abstract class IAuthService {
-  Future<void> signUp(
-      BuildContext context, String name, String email, String password,);
+abstract class IAuthService extends ChangeNotifier {
+  Future<void> signUp(BuildContext context, String name,
+      String email, String password,);
   Future<void> logIn(BuildContext context, String username, String password);
   Future<void> logOut(BuildContext context);
   Future<bool> isLoggedIn();
   Future<Map<String, String?>> getUserInfo();
-  Future<void> changePassword(
-      BuildContext context, String oldPassword, String newPassword,);
+  Future<void> changePassword(BuildContext context,
+      String oldPassword, String newPassword,);
   Future<void> deleteAccount(BuildContext context);
 }
 
-class AuthService implements IAuthService {
+class AuthService extends ChangeNotifier implements IAuthService {
   final StorageService _storage;
 
   AuthService(this._storage);
 
   @override
-  Future<void> signUp(
-      BuildContext context, String name, String email, String password,) async {
+  Future<void> signUp(BuildContext context, String name, String email,
+      String password,) async {
     await _storage.write('login', 'yes');
     await _storage.write('name', name);
     await _storage.write('email', email);
     await _storage.write('password', password);
+    notifyListeners();
 
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(context, '/tabs');
   }
 
   @override
-  Future<void> logIn(
-      BuildContext context, String username, String password,) async {
+  Future<void> logIn(BuildContext context, String username,
+      String password,) async {
     final String? storedName = await _storage.read('name');
     final String? storedPassword = await _storage.read('password');
 
     if (storedName == username && storedPassword == password) {
       await _storage.write('login', 'yes');
-
+      notifyListeners();
       if (!context.mounted) return;
       Navigator.pushReplacementNamed(context, '/tabs');
     } else {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid username or password'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Invalid username or password'),
+            backgroundColor: Colors.red,),
       );
     }
   }
@@ -55,7 +54,7 @@ class AuthService implements IAuthService {
   @override
   Future<void> logOut(BuildContext context) async {
     await _storage.write('login', 'no');
-
+    notifyListeners();
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(context, '/');
   }
@@ -74,26 +73,22 @@ class AuthService implements IAuthService {
   }
 
   @override
-  Future<void> changePassword(
-      BuildContext context, String oldPassword, String newPassword,) async {
+  Future<void> changePassword(BuildContext context, String oldPassword,
+      String newPassword,) async {
     final String? storedPassword = await _storage.read('password');
-
     if (storedPassword == oldPassword) {
       await _storage.write('password', newPassword);
+      notifyListeners();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed successfully'),
-          backgroundColor: Colors.green,
-        ),
+        const SnackBar(content: Text('Password changed successfully'),
+            backgroundColor: Colors.green,),
       );
     } else {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Incorrect old password'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Incorrect old password'),
+            backgroundColor: Colors.red,),
       );
     }
   }
@@ -104,14 +99,13 @@ class AuthService implements IAuthService {
     await _storage.delete('name');
     await _storage.delete('email');
     await _storage.delete('password');
+    notifyListeners();
 
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(context, '/');
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Account deleted'),
-        backgroundColor: Colors.red,
-      ),
+      const SnackBar(content: Text('Account deleted'),
+          backgroundColor: Colors.red,),
     );
   }
 }

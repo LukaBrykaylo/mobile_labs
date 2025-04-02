@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
 import 'package:mobile_labs/service/auth_service.dart';
-import 'package:mobile_labs/service/storage_service.dart';
+import 'package:provider/provider.dart';
 
 class LogInPage extends StatefulWidget {
   const LogInPage({super.key});
@@ -11,7 +11,6 @@ class LogInPage extends StatefulWidget {
 }
 
 class LogInPageState extends State<LogInPage> {
-  final IAuthService authService = AuthService(SecureStorageService());
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -22,7 +21,8 @@ class LogInPageState extends State<LogInPage> {
     super.dispose();
   }
 
-  void _logIn() {
+  void _logIn(BuildContext context) {
+    final authService = Provider.of<IAuthService>(context, listen: false);
     authService.logIn(
       context,
       usernameController.text,
@@ -48,10 +48,13 @@ class LogInPageState extends State<LogInPage> {
               children: [
                 _buildTextField(usernameController, 'Username'),
                 const SizedBox(height: 16),
-                _buildTextField(passwordController, 'Password',
-                    obscureText: true,),
+                _buildTextField(
+                  passwordController,
+                  'Password',
+                  obscureText: true,
+                ),
                 const SizedBox(height: 20),
-                CustomButton(text: 'Log In', onTap: _logIn),
+                CustomButton(text: 'Log In', onTap: () => _logIn(context)),
               ],
             ),
           ),
@@ -60,8 +63,11 @@ class LogInPageState extends State<LogInPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label,
-      {bool obscureText = false,}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    bool obscureText = false,
+  }) {
     return TextField(
       controller: controller,
       style: const TextStyle(color: Colors.white),

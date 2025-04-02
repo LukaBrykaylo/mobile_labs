@@ -6,19 +6,25 @@ import 'package:mobile_labs/pages/login_page.dart';
 import 'package:mobile_labs/pages/signup_page.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/storage_service.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final storageService = SecureStorageService();
   final authService = AuthService(storageService);
-
   final bool isRegistered = await authService.isLoggedIn();
 
-  runApp(MyApp(isRegistered: isRegistered));
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<StorageService>(create: (_) => storageService),
+        ChangeNotifierProvider<IAuthService>(create: (_) => authService),
+      ],
+      child: MyApp(isRegistered: isRegistered),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
