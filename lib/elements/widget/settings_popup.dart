@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_labs/service/auth_service.dart';
-import 'package:mobile_labs/service/storage_service.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPopup extends StatelessWidget {
   const SettingsPopup({super.key});
@@ -11,10 +11,10 @@ class SettingsPopup extends StatelessWidget {
       barrierColor: Colors.transparent,
       builder: (context) {
         final TextEditingController oldPasswordController =
-            TextEditingController();
+        TextEditingController();
         final TextEditingController newPasswordController =
-            TextEditingController();
-        final IAuthService authService = AuthService(SecureStorageService());
+        TextEditingController();
+        final authService = Provider.of<IAuthService>(context, listen: false);
 
         return AlertDialog(
           title: const Text('Change Password'),
@@ -57,7 +57,7 @@ class SettingsPopup extends StatelessWidget {
   }
 
   void _deleteAccount(BuildContext context) async {
-    final IAuthService authService = AuthService(SecureStorageService());
+    final authService = Provider.of<IAuthService>(context, listen: false);
     await authService.deleteAccount(context);
   }
 
