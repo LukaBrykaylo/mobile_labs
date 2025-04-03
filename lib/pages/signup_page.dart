@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
+import 'package:mobile_labs/service/auth_service.dart';
+import 'package:mobile_labs/service/signup_validation_service.dart';
+import 'package:provider/provider.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
-  final storage = const FlutterSecureStorage();
+  @override
+  SignUpPageState createState() => SignUpPageState();
+}
 
-  Future<void> _saveLogin(BuildContext context) async {
-    await storage.write(key: 'login', value: 'yes');
-    if (!context.mounted) return;
-    Navigator.pushNamed(context, '/tabs');
-  }
+class SignUpPageState extends State<SignUpPage> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool isEmailValid = true;
+  bool isNameValid = true;
+  bool isPasswordValid = true;
+
+  final SignUpValidationService validationService = SignUpValidationService();
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<IAuthService>(context, listen: false);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -29,34 +40,70 @@ class SignUpPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const TextField(
-                  style: TextStyle(color: Colors.white),
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Name',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: const TextStyle(color: Colors.white),
+                    errorText: isNameValid ? null : 'Invalid name format',
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      isNameValid = validationService.validationName(value);
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
-                const TextField(
-                  style: TextStyle(color: Colors.white),
+                TextField(
+                  controller: emailController,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: const TextStyle(color: Colors.white),
+                    errorText: isEmailValid ? null : 'Invalid email format',
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      isEmailValid = validationService.validateEmail(value);
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
-                const TextField(
-                  style: TextStyle(color: Colors.white),
+                TextField(
+                  controller: passwordController,
+                  style: const TextStyle(color: Colors.white),
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: TextStyle(color: Colors.white),
+                    labelStyle: const TextStyle(color: Colors.white),
+                    errorText:
+                        isPasswordValid ? null : 'Invalid password format',
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      isPasswordValid =
+                          validationService.validationPassword(value);
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
                 CustomButton(
                   text: 'Sign Up',
-                  onTap: () => _saveLogin(context),
+                  onTap: () {
+                    if (validationService.validateEmail(emailController.text)) {
+                      authService.signUp(
+                        context,
+                        nameController.text,
+                        emailController.text,
+                        passwordController.text,
+                      );
+                    } else {
+                      setState(() {
+                        isEmailValid = false;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
