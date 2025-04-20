@@ -21,7 +21,6 @@ class CameraPageState extends State<CameraPage> {
     super.initState();
     _updateTemperatures();
     _timer = Timer.periodic(
-      
       const Duration(seconds: 2),
       (_) => _updateTemperatures(),
     );
@@ -44,7 +43,7 @@ class CameraPageState extends State<CameraPage> {
 
   Widget _buildCameraCard(String cameraName, double temperature) {
     return GestureDetector(
-      onTap: () {}, // TODO: Open camera logic
+      onTap: () => Navigator.pushNamed(context, '/camera_view'),
       child: Container(
         height: 220,
         decoration: BoxDecoration(

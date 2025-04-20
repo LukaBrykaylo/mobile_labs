@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mobile_labs/elements/widget/settings_popup.dart';
 import 'package:mobile_labs/service/auth_service.dart';
+import 'package:mobile_labs/service/network_service.dart';
 import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -21,7 +23,19 @@ class ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserInfo() async {
     final authService = Provider.of<IAuthService>(context, listen: false);
+    final networkService = Provider.of<NetworkService>(context, listen: false);
     final userInfo = await authService.getUserInfo();
+    final loggedIn = await authService.isLoggedIn();
+
+    if (loggedIn) {
+      if (!networkService.hasConnection) {
+        Fluttertoast.showToast(
+          msg: 'Logged in offline mode',
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+    }
+
     setState(() {
       _name = userInfo['name'];
       _email = userInfo['email'];
