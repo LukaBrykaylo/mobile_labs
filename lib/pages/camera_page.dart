@@ -1,6 +1,8 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:isolate';
 import 'package:flutter/material.dart';
+import 'package:flutter_isolate/flutter_isolate.dart';
+import 'package:mobile_labs/service/temp_isolate_service.dart';
 
 class CameraPage extends StatefulWidget {
   final List<String> cameraNames;
@@ -12,32 +14,46 @@ class CameraPage extends StatefulWidget {
 }
 
 class CameraPageState extends State<CameraPage> {
-  final Random _random = Random();
+  FlutterIsolate? _isolate;
+  SendPort? _isolateSendPort;
+  ReceivePort? _receivePort;
   late Timer _timer;
   Map<String, double> _temperatures = {};
 
   @override
   void initState() {
     super.initState();
-    _updateTemperatures();
-    _timer = Timer.periodic(
-      const Duration(seconds: 2),
-      (_) => _updateTemperatures(),
-    );
+    _startIsolate();
   }
 
-  void _updateTemperatures() {
-    setState(() {
-      _temperatures = {
-        for (var camera in widget.cameraNames)
-          camera: 20 + _random.nextDouble() * 15,
-      };
+  Future<void> _startIsolate() async {
+    _receivePort = ReceivePort();
+    _isolate =
+        await FlutterIsolate.spawn(temperatureIsolate, _receivePort!.sendPort);
+
+    _receivePort!.listen((data) {
+      if (data is SendPort) {
+        _isolateSendPort = data;
+        _startTemperatureUpdates();
+      } else if (data is Map<String, double>) {
+        setState(() {
+          _temperatures = data;
+        });
+      }
+    });
+  }
+
+  void _startTemperatureUpdates() {
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _isolateSendPort?.send(widget.cameraNames);
     });
   }
 
   @override
   void dispose() {
     _timer.cancel();
+    _receivePort?.close();
+    _isolate?.kill();
     super.dispose();
   }
 
@@ -51,7 +67,7 @@ class CameraPageState extends State<CameraPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white, width: 0.5),
         ),
-        child: Stack(
+        child: Stack (
           children: [
             const Center(
               child: Icon(Icons.image, color: Colors.white, size: 40),
