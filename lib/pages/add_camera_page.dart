@@ -47,8 +47,10 @@ class AddCameraPageState extends State<AddCameraPage> {
   Widget _buildCameraList() {
     if (widget.cameraNames.isEmpty) {
       return const Center(
-        child: Text('No connected cameras',
-            style: TextStyle(color: Colors.white70, fontSize: 18),),
+        child: Text(
+          'No connected cameras',
+          style: TextStyle(color: Colors.white70, fontSize: 18),
+        ),
       );
     }
     return ListView.builder(
@@ -95,12 +97,15 @@ class AddCameraPageState extends State<AddCameraPage> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Connected Cameras:',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.5,),),
+                  child: Text(
+                    'Connected Cameras:',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
