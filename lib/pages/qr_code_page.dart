@@ -103,9 +103,12 @@ class _QRScannerPageState extends State<QRScannerPage> {
       Future.delayed(const Duration(seconds: 5), () {
         if (isWaitingForResponse) {
           _client.disconnect();
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to receive response')),);
+          if (mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to receive response')),
+            );
+          }
         }
       });
     }
