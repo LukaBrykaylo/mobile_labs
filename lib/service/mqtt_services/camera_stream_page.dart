@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_labs/service/mqtt_services/mqtt_service.dart';
 
 class CameraStreamPage extends StatefulWidget {
-  const CameraStreamPage({super.key});
+  final String topic;
+
+  const CameraStreamPage({required this.topic, super.key});
 
   @override
   State<CameraStreamPage> createState() => _CameraStreamPageState();
@@ -19,7 +21,7 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
     super.initState();
     _mqttService = MQTTService(
       broker: 'b16ed41a7caf46488f1fcebc76b78e95.s1.eu.hivemq.cloud',
-      topic: 'camera/stream',
+      topic: widget.topic,
       username: 'Broke',
       password: 'Xx1234567890',
       onMessageReceived: (message) {
@@ -37,6 +39,13 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
       },
     );
     _mqttService.connect();
+  }
+
+  void _handleDisconnect() {
+    _mqttService.unpair(widget.topic);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Disconnected from camera')),
+    );
   }
 
   @override
@@ -78,6 +87,26 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
                       ),
                     ],
                   ),
+          ),
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _handleDisconnect,
+                icon: const Icon(Icons.stop_circle),
+                label: const Text('Disconnect'),
+              ),
+            ),
           ),
         ],
       ),

@@ -12,19 +12,6 @@ class TabNavigation extends StatefulWidget {
 
 class _TabNavigationState extends State<TabNavigation> {
   int _selectedIndex = 0;
-  final List<String> _cameraNames = [];
-
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-    _pages = [
-      const ProfilePage(),
-      CameraPage(cameraNames: _cameraNames),
-      AddCameraPage(cameraNames: _cameraNames),
-    ];
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -32,10 +19,23 @@ class _TabNavigationState extends State<TabNavigation> {
     });
   }
 
+  Widget _buildPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return const ProfilePage();
+      case 1:
+        return const CameraPage();
+      case 2:
+        return const AddCameraPage();
+      default:
+        return const Center(child: Text('Page not found'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: _buildPage(),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         selectedItemColor: Colors.greenAccent,

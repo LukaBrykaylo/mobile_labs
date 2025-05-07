@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_labs/elements/widget/tab_navigation.dart';
 import 'package:mobile_labs/pages/home_page.dart';
 import 'package:mobile_labs/pages/login_page.dart';
+import 'package:mobile_labs/pages/qr_code_page.dart';
 import 'package:mobile_labs/pages/signup_page.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/mqtt_services/camera_stream_page.dart';
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LogInPage(),
         '/signup': (context) => const SignUpPage(),
         '/tabs': (context) => const TabNavigation(),
-        '/camera_view': (context) => const CameraStreamPage(),
+        '/camera_view': (context) => const CameraStreamPage(topic: '',),
+        '/qr_code': (context) => const QRScannerPage(),
       },
     );
   }
