@@ -1,31 +1,53 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddCameraPage extends StatefulWidget {
-  final List<String> cameraNames;
-
-  const AddCameraPage({required this.cameraNames, super.key});
+  const AddCameraPage({super.key});
 
   @override
   AddCameraPageState createState() => AddCameraPageState();
 }
 
 class AddCameraPageState extends State<AddCameraPage> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  Map<String, String> deviceStreamMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeviceStreamMap();
+  }
+
+  Future<void> _loadDeviceStreamMap() async {
+    final existingData = await _storage.read(key: 'device_stream_map');
+    if (existingData != null) {
+      final decoded = jsonDecode(existingData);
+      if (decoded is Map) {
+        setState(() {
+          deviceStreamMap = decoded.map((key, value) =>
+              MapEntry(key.toString(), value.toString()),);
+        });
+      }
+    }
+  }
+
   void _addCamera() {
-    setState(() {
-      widget.cameraNames.add('Camera ${widget.cameraNames.length + 1}');
-    });
+    Navigator.pushNamed(context, '/qr_code').then((_) => _loadDeviceStreamMap());
   }
 
-  void _removeCamera(int index) {
+  Future<void> _removeCamera(String deviceTopic) async {
     setState(() {
-      widget.cameraNames.removeAt(index);
+      deviceStreamMap.remove(deviceTopic);
     });
+    await _storage.write(key: 'device_stream_map',
+        value: jsonEncode(deviceStreamMap),);
   }
 
-  Widget _buildCameraItem(String name, int index) {
+  Widget _buildCameraItem(String deviceTopic, String streamTopic) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.black54,
         borderRadius: BorderRadius.circular(8),
@@ -34,10 +56,27 @@ class AddCameraPageState extends State<AddCameraPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Device: $deviceTopic',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Stream: $streamTopic',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.clear, color: Colors.deepOrange),
-            onPressed: () => _removeCamera(index),
+            onPressed: () => _removeCamera(deviceTopic),
           ),
         ],
       ),
@@ -45,7 +84,7 @@ class AddCameraPageState extends State<AddCameraPage> {
   }
 
   Widget _buildCameraList() {
-    if (widget.cameraNames.isEmpty) {
+    if (deviceStreamMap.isEmpty) {
       return const Center(
         child: Text(
           'No connected cameras',
@@ -53,11 +92,11 @@ class AddCameraPageState extends State<AddCameraPage> {
         ),
       );
     }
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: widget.cameraNames.length,
-      itemBuilder: (context, index) =>
-          _buildCameraItem(widget.cameraNames[index], index),
+      children: deviceStreamMap.entries.map((entry) {
+        return _buildCameraItem(entry.key, entry.value);
+      }).toList(),
     );
   }
 

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
@@ -12,6 +14,7 @@ class MQTTService {
   final MessageCallback onMessageReceived;
 
   late MqttServerClient _client;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   MQTTService({
     required this.broker,
@@ -60,5 +63,35 @@ class MQTTService {
 
   void disconnect() {
     _client.disconnect();
+  }
+
+  Future<void> unpair(String targetTopic) async {
+    final existing = await _storage.read(key: 'device_stream_map');
+    Map<String, String> deviceStreamMap = {};
+
+    if (existing != null) {
+      final decodedMap = jsonDecode(existing);
+      if (decodedMap is Map) {
+        deviceStreamMap = decodedMap.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
+      }
+    }
+
+    String? foundKey;
+    deviceStreamMap.forEach((key, value) {
+      if (value == targetTopic) {
+        foundKey = key;
+      }
+    });
+
+    if (foundKey != null) {
+      final builder = MqttClientPayloadBuilder();
+      builder.addString('disconnect');
+      _client.publishMessage(foundKey!, MqttQos.atMostOnce, builder.payload!);
+      deviceStreamMap.remove(foundKey);
+      await _storage.write(
+          key: 'device_stream_map', value: jsonEncode(deviceStreamMap),);
+    }
   }
 }
