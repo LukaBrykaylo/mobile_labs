@@ -1,58 +1,24 @@
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:mobile_labs/service/mqtt_services/mqtt_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/camera_stream/camera_stream_cubit.dart';
+import 'package:mobile_labs/cubit/camera_stream/camera_stream_state.dart';
 
-class CameraStreamPage extends StatefulWidget {
+class CameraStreamPage extends StatelessWidget {
   final String topic;
 
   const CameraStreamPage({required this.topic, super.key});
 
   @override
-  State<CameraStreamPage> createState() => _CameraStreamPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => CameraStreamCubit(topic),
+      child: const _CameraStreamView(),
+    );
+  }
 }
 
-class _CameraStreamPageState extends State<CameraStreamPage> {
-  late MQTTService _mqttService;
-  Uint8List? _latestImage;
-
-  @override
-  void initState() {
-    super.initState();
-    _mqttService = MQTTService(
-      broker: 'b16ed41a7caf46488f1fcebc76b78e95.s1.eu.hivemq.cloud',
-      topic: widget.topic,
-      username: 'Broke',
-      password: 'Xx1234567890',
-      onMessageReceived: (message) {
-        try {
-          if (message.trim().isNotEmpty) {
-            setState(() {
-              _latestImage = base64Decode(message);
-            });
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error decoding image')),
-          );
-        }
-      },
-    );
-    _mqttService.connect();
-  }
-
-  void _handleDisconnect() {
-    _mqttService.unpair(widget.topic);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Disconnected from camera')),
-    );
-  }
-
-  @override
-  void dispose() {
-    _mqttService.disconnect();
-    super.dispose();
-  }
+class _CameraStreamView extends StatelessWidget {
+  const _CameraStreamView();
 
   @override
   Widget build(BuildContext context) {
@@ -74,19 +40,36 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
             fit: BoxFit.cover,
           ),
           Center(
-            child: _latestImage != null
-                ? Image.memory(_latestImage!)
-                : const Column(
+            child: BlocConsumer<CameraStreamCubit, CameraStreamState>(
+              listener: (context, state) {
+                if (state is CameraStreamError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message)),
+                  );
+                }
+                if (state is CameraStreamDisconnected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Disconnected from camera')),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              builder: (context, state) {
+                if (state is CameraStreamImage) {
+                  return Image.memory(state.imageBytes);
+                } else {
+                  return const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(color: Colors.white),
                       SizedBox(height: 16),
-                      Text(
-                        'Waiting for response',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      Text('Waiting for response',
+                          style: TextStyle(color: Colors.white),),
                     ],
-                  ),
+                  );
+                }
+              },
+            ),
           ),
           Positioned(
             bottom: 30,
@@ -99,10 +82,9 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12),),
                 ),
-                onPressed: _handleDisconnect,
+                onPressed: () => context.read<CameraStreamCubit>().disconnect(),
                 icon: const Icon(Icons.stop_circle),
                 label: const Text('Disconnect'),
               ),

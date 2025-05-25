@@ -1,50 +1,34 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/add_camera/add_camera_cubit.dart';
 
-class AddCameraPage extends StatefulWidget {
+class AddCameraPage extends StatelessWidget {
   const AddCameraPage({super.key});
 
   @override
-  AddCameraPageState createState() => AddCameraPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AddCameraCubit()..loadDeviceStreamMap(),
+      child: const AddCameraView(),
+    );
+  }
 }
 
-class AddCameraPageState extends State<AddCameraPage> {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  Map<String, String> deviceStreamMap = {};
+class AddCameraView extends StatelessWidget {
+  const AddCameraView({super.key});
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDeviceStreamMap();
-  }
-
-  Future<void> _loadDeviceStreamMap() async {
-    final existingData = await _storage.read(key: 'device_stream_map');
-    if (existingData != null) {
-      final decoded = jsonDecode(existingData);
-      if (decoded is Map) {
-        setState(() {
-          deviceStreamMap = decoded.map((key, value) =>
-              MapEntry(key.toString(), value.toString()),);
-        });
+  void _addCamera(BuildContext context) {
+    final cubit = context.read<AddCameraCubit>();
+    Navigator.pushNamed(context, '/qr_code').then((_) {
+      if (!cubit.isClosed) {
+        cubit.loadDeviceStreamMap();
       }
-    }
-  }
-
-  void _addCamera() {
-    Navigator.pushNamed(context, '/qr_code').then((_) => _loadDeviceStreamMap());
-  }
-
-  Future<void> _removeCamera(String deviceTopic) async {
-    setState(() {
-      deviceStreamMap.remove(deviceTopic);
     });
-    await _storage.write(key: 'device_stream_map',
-        value: jsonEncode(deviceStreamMap),);
   }
 
-  Widget _buildCameraItem(String deviceTopic, String streamTopic) {
+
+  Widget _buildCameraItem(
+      BuildContext context, String deviceTopic, String streamTopic,) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -76,15 +60,17 @@ class AddCameraPageState extends State<AddCameraPage> {
           ),
           IconButton(
             icon: const Icon(Icons.clear, color: Colors.deepOrange),
-            onPressed: () => _removeCamera(deviceTopic),
+            onPressed: () {
+              context.read<AddCameraCubit>().removeCamera(deviceTopic);
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCameraList() {
-    if (deviceStreamMap.isEmpty) {
+  Widget _buildCameraList(BuildContext context, Map<String, String> map) {
+    if (map.isEmpty) {
       return const Center(
         child: Text(
           'No connected cameras',
@@ -92,11 +78,12 @@ class AddCameraPageState extends State<AddCameraPage> {
         ),
       );
     }
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      children: deviceStreamMap.entries.map((entry) {
-        return _buildCameraItem(entry.key, entry.value);
-      }).toList(),
+      children: map.entries
+          .map((entry) => _buildCameraItem(context, entry.key, entry.value))
+          .toList(),
     );
   }
 
@@ -117,7 +104,7 @@ class AddCameraPageState extends State<AddCameraPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: GestureDetector(
-                  onTap: _addCamera,
+                  onTap: () => _addCamera(context),
                   child: Container(
                     height: 150,
                     decoration: BoxDecoration(
@@ -148,7 +135,18 @@ class AddCameraPageState extends State<AddCameraPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              Expanded(child: _buildCameraList()),
+              Expanded(
+                child: BlocBuilder<AddCameraCubit, AddCameraState>(
+                  builder: (context, state) {
+                    if (state is AddCameraLoaded) {
+                      return _buildCameraList(context, state.deviceStreamMap);
+                    } else if (state is AddCameraLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
             ],
           ),
         ],

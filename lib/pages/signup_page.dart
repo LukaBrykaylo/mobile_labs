@@ -1,31 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/auth/auth_cubit.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
-import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/signup_validation_service.dart';
-import 'package:provider/provider.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+class SignUpPage extends StatelessWidget {
+  SignUpPage({super.key});
 
-  @override
-  SignUpPageState createState() => SignUpPageState();
-}
-
-class SignUpPageState extends State<SignUpPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  bool isEmailValid = true;
-  bool isNameValid = true;
-  bool isPasswordValid = true;
-
   final SignUpValidationService validationService = SignUpValidationService();
+
+  final ValueNotifier<bool> isNameValid = ValueNotifier(true);
+  final ValueNotifier<bool> isEmailValid = ValueNotifier(true);
+  final ValueNotifier<bool> isPasswordValid = ValueNotifier(true);
+
+  void _signUp(BuildContext context) {
+    final isEmail = validationService.validateEmail(emailController.text);
+    isEmailValid.value = isEmail;
+
+    if (isEmail) {
+      context.read<AuthCubit>().signUp(
+        context,
+        nameController.text,
+        emailController.text,
+        passwordController.text,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<IAuthService>(context, listen: false);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -40,71 +47,53 @@ class SignUpPageState extends State<SignUpPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextField(
-                  controller: nameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    errorText: isNameValid ? null : 'Invalid name format',
+                ValueListenableBuilder(
+                  valueListenable: isNameValid,
+                  builder: (_, bool isValid, __) => TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Name',
+                      labelStyle: const TextStyle(color: Colors.white),
+                      errorText: isValid ? null : 'Invalid name format',
+                    ),
+                    onChanged: (value) => isNameValid.value =
+                        validationService.validationName(value),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      isNameValid = validationService.validationName(value);
-                    });
-                  },
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: emailController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    errorText: isEmailValid ? null : 'Invalid email format',
+                ValueListenableBuilder(
+                  valueListenable: isEmailValid,
+                  builder: (_, bool isValid, __) => TextField(
+                    controller: emailController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: const TextStyle(color: Colors.white),
+                      errorText: isValid ? null : 'Invalid email format',
+                    ),
+                    onChanged: (value) => isEmailValid.value =
+                        validationService.validateEmail(value),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      isEmailValid = validationService.validateEmail(value);
-                    });
-                  },
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: passwordController,
-                  style: const TextStyle(color: Colors.white),
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    errorText:
-                        isPasswordValid ? null : 'Invalid password format',
+                ValueListenableBuilder(
+                  valueListenable: isPasswordValid,
+                  builder: (_, bool isValid, __) => TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: const TextStyle(color: Colors.white),
+                      errorText: isValid ? null : 'Invalid password format',
+                    ),
+                    onChanged: (value) => isPasswordValid.value =
+                        validationService.validationPassword(value),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      isPasswordValid =
-                          validationService.validationPassword(value);
-                    });
-                  },
                 ),
                 const SizedBox(height: 20),
-                CustomButton(
-                  text: 'Sign Up',
-                  onTap: () {
-                    if (validationService.validateEmail(emailController.text)) {
-                      authService.signUp(
-                        context,
-                        nameController.text,
-                        emailController.text,
-                        passwordController.text,
-                      );
-                    } else {
-                      setState(() {
-                        isEmailValid = false;
-                      });
-                    }
-                  },
-                ),
+                CustomButton(text: 'Sign Up', onTap: () => _signUp(context)),
               ],
             ),
           ),

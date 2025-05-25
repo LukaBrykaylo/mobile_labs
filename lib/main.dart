@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/auth/auth_cubit.dart';
 import 'package:mobile_labs/elements/widget/tab_navigation.dart';
 import 'package:mobile_labs/pages/home_page.dart';
 import 'package:mobile_labs/pages/login_page.dart';
@@ -24,10 +26,13 @@ void main() async {
     MultiProvider(
       providers: [
         Provider<StorageService>(create: (_) => storageService),
-        ChangeNotifierProvider<IAuthService>(create: (_) => authService),
+        Provider<IAuthService>(create: (_) => authService),
         ChangeNotifierProvider<NetworkService>(create: (_) => networkService),
       ],
-      child: MyApp(isRegistered: isRegistered),
+      child: BlocProvider(
+        create: (_) => AuthCubit(authService: authService),
+        child: MyApp(isRegistered: isRegistered),
+      ),
     ),
   );
 }
@@ -44,8 +49,8 @@ class MyApp extends StatelessWidget {
       initialRoute: isRegistered ? '/tabs' : '/',
       routes: {
         '/': (context) => const HomePage(),
-        '/login': (context) => const LogInPage(),
-        '/signup': (context) => const SignUpPage(),
+        '/login': (context) => LogInPage(),
+        '/signup': (context) => SignUpPage(),
         '/tabs': (context) => const TabNavigation(),
         '/camera_view': (context) => const CameraStreamPage(topic: '',),
         '/qr_code': (context) => const QRScannerPage(),
