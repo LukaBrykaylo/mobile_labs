@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class CameraState extends Equatable {
-  final Map<String, String> deviceStreamMap;
+  final Map<String, dynamic> deviceStreamMap;
   final Map<String, double> temperatures;
 
   const CameraState({
@@ -14,7 +14,7 @@ class CameraState extends Equatable {
   }
 
   CameraState copyWith({
-    Map<String, String>? deviceStreamMap,
+    Map<String, dynamic>? deviceStreamMap,
     Map<String, double>? temperatures,
   }) {
     return CameraState(

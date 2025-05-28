@@ -107,7 +107,7 @@ class CameraView extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => CameraStreamPage(topic: topic),
+          builder: (_) => CameraStreamPage(topic: topic.toString()),
         ),
       );
     } else {

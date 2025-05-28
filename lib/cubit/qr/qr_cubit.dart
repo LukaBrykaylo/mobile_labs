@@ -28,7 +28,7 @@ class QrCubit extends Cubit<QrState> {
   Future<void> _connectMQTT(String topic) async {
     _client = MqttServerClient.withPort(
       mqttBroker,
-      'flutter_client',
+      flutterId,
       8883,
     );
     _client.secure = true;
@@ -37,8 +37,8 @@ class QrCubit extends Cubit<QrState> {
     _client.securityContext = SecurityContext.defaultContext;
 
     final connMessage = MqttConnectMessage()
-        .withClientIdentifier('flutter_client')
-        .authenticateAs('Broke', 'Xx1234567890')
+        .withClientIdentifier(flutterId)
+        .authenticateAs(mqttUsername, mqttPassword)
         .withWillQos(MqttQos.atMostOnce);
     _client.connectionMessage = connMessage;
 

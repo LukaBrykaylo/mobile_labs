@@ -28,7 +28,7 @@ class CameraCubit extends Cubit<CameraState> {
       final decoded = jsonDecode(existing);
       if (decoded is Map) {
         emit(
-          state.copyWith(deviceStreamMap: Map<String, String>.from(decoded)),
+          state.copyWith(deviceStreamMap: Map<String, dynamic>.from(decoded)),
         );
       }
     }
