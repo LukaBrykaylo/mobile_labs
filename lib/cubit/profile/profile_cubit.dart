@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_labs/cubit/profile/profile_state.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/network_service.dart';
 
-
 class ProfileCubit extends Cubit<ProfileState> {
   final IAuthService authService;
   final NetworkService networkService;
 
-  ProfileCubit({required this.authService, required this.networkService})
-      : super(ProfileState(isLoading: true)) {
+  ProfileCubit({
+    required this.authService,
+    required this.networkService,
+  }) : super(ProfileState(isLoading: true)) {
     loadUserInfo();
   }
 
@@ -33,7 +33,12 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  void logOut(BuildContext context) {
-    authService.logOut(context);
+  Future<void> logOut() async {
+    try {
+      await authService.logOut();
+      emit(state.copyWith(loggedOut: true));
+    } catch (e) {
+      emit(state.copyWith(error: e.toString()));
+    }
   }
 }

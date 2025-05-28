@@ -15,18 +15,10 @@ class QRScannerPage extends StatelessWidget {
   }
 }
 
-class QRScannerView extends StatefulWidget {
+class QRScannerView extends StatelessWidget {
   const QRScannerView({super.key});
 
-  @override
-  State<QRScannerView> createState() => _QRScannerViewState();
-}
-
-class _QRScannerViewState extends State<QRScannerView> {
-  final loginController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  void _onDetect(BarcodeCapture capture) {
+  void _onDetect(BuildContext context, BarcodeCapture capture) {
     final topic = capture.barcodes.first.rawValue;
     if (topic != null) {
       context.read<QrCubit>().scanTopic(topic);
@@ -35,6 +27,9 @@ class _QRScannerViewState extends State<QRScannerView> {
 
   @override
   Widget build(BuildContext context) {
+    final loginController = TextEditingController();
+    final passwordController = TextEditingController();
+
     return BlocConsumer<QrCubit, QrState>(
       listener: (context, state) {
         if (state is QrAuthenticated) {
@@ -51,7 +46,8 @@ class _QRScannerViewState extends State<QRScannerView> {
       builder: (context, state) {
         if (state is QrInitial) {
           return Scaffold(
-            body: MobileScanner(onDetect: _onDetect),
+            body: MobileScanner(
+                onDetect: (capture) => _onDetect(context, capture),),
           );
         } else if (state is QrScanSuccess || state is QrWaiting) {
           return Scaffold(
@@ -72,7 +68,9 @@ class _QRScannerViewState extends State<QRScannerView> {
                   ElevatedButton(
                     onPressed: () {
                       context.read<QrCubit>().sendAuth(
-                          loginController.text, passwordController.text,);
+                            loginController.text,
+                            passwordController.text,
+                          );
                     },
                     child: state is QrWaiting
                         ? const CircularProgressIndicator()

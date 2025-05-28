@@ -11,26 +11,32 @@ class AddCameraCubit extends Cubit<AddCameraState> {
 
   Future<void> loadDeviceStreamMap() async {
     emit(AddCameraLoading());
+
     final existingData = await _storage.read(key: 'device_stream_map');
-    Map<String, String> deviceStreamMap = {};
     if (existingData != null) {
       final decoded = jsonDecode(existingData);
       if (decoded is Map) {
-        deviceStreamMap = decoded.map(
+        final deviceStreamMap = decoded.map(
               (key, value) => MapEntry(key.toString(), value.toString()),
         );
+        emit(AddCameraLoaded(deviceStreamMap));
+        return;
       }
     }
-    emit(AddCameraLoaded(deviceStreamMap));
+
+    emit(AddCameraLoaded({}));
   }
 
   Future<void> removeCamera(String deviceTopic) async {
     if (state is AddCameraLoaded) {
       final currentMap = Map<String, String>.from(
-          (state as AddCameraLoaded).deviceStreamMap,);
+        (state as AddCameraLoaded).deviceStreamMap,
+      );
       currentMap.remove(deviceTopic);
       await _storage.write(
-          key: 'device_stream_map', value: jsonEncode(currentMap),);
+        key: 'device_stream_map',
+        value: jsonEncode(currentMap),
+      );
       emit(AddCameraLoaded(currentMap));
     }
   }

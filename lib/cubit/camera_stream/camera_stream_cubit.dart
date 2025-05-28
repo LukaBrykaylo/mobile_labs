@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_labs/cubit/camera_stream/camera_stream_state.dart';
+import 'package:mobile_labs/elements/constants/mqtt_constants.dart';
 import 'package:mobile_labs/service/mqtt_services/mqtt_service.dart';
 
 class CameraStreamCubit extends Cubit<CameraStreamState> {
@@ -10,10 +11,10 @@ class CameraStreamCubit extends Cubit<CameraStreamState> {
 
   CameraStreamCubit(this.topic) : super(CameraStreamInitial()) {
     _mqttService = MQTTService(
-      broker: 'b16ed41a7caf46488f1fcebc76b78e95.s1.eu.hivemq.cloud',
+      broker: mqttBroker,
       topic: topic,
-      username: 'Broke',
-      password: 'Xx1234567890',
+      username: mqttUsername,
+      password: mqttPassword,
       onMessageReceived: (message) {
         if (message.trim().isEmpty) return;
         try {

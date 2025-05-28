@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile_labs/elements/constants/mqtt_constants.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
@@ -25,7 +27,7 @@ class QrCubit extends Cubit<QrState> {
 
   Future<void> _connectMQTT(String topic) async {
     _client = MqttServerClient.withPort(
-      'b16ed41a7caf46488f1fcebc76b78e95.s1.eu.hivemq.cloud',
+      mqttBroker,
       'flutter_client',
       8883,
     );

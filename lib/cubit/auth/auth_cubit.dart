@@ -1,22 +1,30 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 
-class AuthCubit extends Cubit<void> {
+part 'auth_state.dart';
+
+class AuthCubit extends Cubit<AuthState> {
   final IAuthService authService;
 
-  AuthCubit({required this.authService}) : super(null);
+  AuthCubit({required this.authService}) : super(AuthInitial());
 
-  void logIn(BuildContext context, String username, String password) {
-    authService.logIn(context, username, password);
+  Future<void> logIn(String username, String password) async {
+    emit(AuthLoading());
+    final success = await authService.logIn(username, password);
+    if (success) {
+      emit(AuthSuccess());
+    } else {
+      emit(AuthFailure('Invalid username or password'));
+    }
   }
 
-  void signUp(
-      BuildContext context,
-      String name,
-      String email,
-      String password,
-      ) {
-    authService.signUp(context, name, email, password);
+  Future<void> signUp(String name, String email, String password) async {
+    emit(AuthLoading());
+    final success = await authService.signUp(name, email, password);
+    if (success) {
+      emit(AuthSuccess());
+    } else {
+      emit(AuthFailure('Failed to sign up'));
+    }
   }
 }

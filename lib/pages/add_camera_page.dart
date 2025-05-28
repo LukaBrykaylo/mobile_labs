@@ -19,9 +19,9 @@ class AddCameraView extends StatelessWidget {
 
   void _addCamera(BuildContext context) {
     final cubit = context.read<AddCameraCubit>();
-    Navigator.pushNamed(context, '/qr_code').then((_) {
+    Navigator.pushNamed(context, '/qr_code').then((_) async {
       if (!cubit.isClosed) {
-        cubit.loadDeviceStreamMap();
+        await cubit.loadDeviceStreamMap();
       }
     });
   }

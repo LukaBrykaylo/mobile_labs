@@ -40,6 +40,11 @@ class ProfilePage extends StatelessWidget {
                     );
                   }
                 }
+
+                if (state.loggedOut) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+
                 if (state.error != null) {
                   Fluttertoast.showToast(
                     msg: state.error!,
@@ -53,6 +58,7 @@ class ProfilePage extends StatelessWidget {
                 if (state.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
                 return Column(
                   children: [
                     SafeArea(
@@ -80,7 +86,7 @@ class ProfilePage extends StatelessWidget {
                                 size: 28,
                               ),
                               onPressed: () =>
-                                  context.read<ProfileCubit>().logOut(context),
+                                  context.read<ProfileCubit>().logOut(),
                             ),
                           ],
                         ),

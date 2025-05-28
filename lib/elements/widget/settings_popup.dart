@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_labs/service/auth_service.dart';
-import 'package:provider/provider.dart';
 
 class SettingsPopup extends StatelessWidget {
   const SettingsPopup({super.key});
 
-  void _changePassword(BuildContext context) {
+  void _changePasswordDialog(BuildContext context, IAuthService authService) {
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+
     showDialog<void>(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (context) {
-        final TextEditingController oldPasswordController =
-        TextEditingController();
-        final TextEditingController newPasswordController =
-        TextEditingController();
-        final authService = Provider.of<IAuthService>(context, listen: false);
-
+      builder: (_) {
         return AlertDialog(
           title: const Text('Change Password'),
           content: Column(
@@ -41,12 +38,10 @@ class SettingsPopup extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 await authService.changePassword(
-                  context,
                   oldPasswordController.text,
                   newPasswordController.text,
                 );
-                if (!context.mounted) return;
-                Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
@@ -56,13 +51,35 @@ class SettingsPopup extends StatelessWidget {
     );
   }
 
-  void _deleteAccount(BuildContext context) async {
-    final authService = Provider.of<IAuthService>(context, listen: false);
-    await authService.deleteAccount(context);
+  Future<void> _confirmDeleteAccount(
+      BuildContext context, IAuthService authService,) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete your account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await authService.deleteAccount();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authService = context.read<IAuthService>();
+
     return AlertDialog(
       title: const Text('Settings'),
       content: Column(
@@ -71,12 +88,12 @@ class SettingsPopup extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.lock),
             title: const Text('Change Password'),
-            onTap: () => _changePassword(context),
+            onTap: () => _changePasswordDialog(context, authService),
           ),
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red),
             title: const Text('Delete Account'),
-            onTap: () => _deleteAccount(context),
+            onTap: () => _confirmDeleteAccount(context, authService),
           ),
         ],
       ),
