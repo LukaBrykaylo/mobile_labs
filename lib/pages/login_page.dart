@@ -1,73 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/auth/auth_cubit.dart';
 import 'package:mobile_labs/elements/widget/custom_button.dart';
-import 'package:mobile_labs/service/auth_service.dart';
-import 'package:provider/provider.dart';
 
-class LogInPage extends StatefulWidget {
-  const LogInPage({super.key});
+class LogInPage extends StatelessWidget {
+  LogInPage({super.key});
 
-  @override
-  LogInPageState createState() => LogInPageState();
-}
-
-class LogInPageState extends State<LogInPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   @override
-  void dispose() {
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  void _logIn(BuildContext context) {
-    final authService = Provider.of<IAuthService>(context, listen: false);
-    authService.logIn(
-      context,
-      usernameController.text,
-      passwordController.text,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'lib/elements/photos/background_small.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTextField(usernameController, 'Username'),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  passwordController,
-                  'Password',
-                  obscureText: true,
+      body: BlocConsumer<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state is AuthSuccess) {
+            Navigator.pushReplacementNamed(context, '/tabs');
+          } else if (state is AuthFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(state.message), backgroundColor: Colors.red,),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'lib/elements/photos/background_small.jpg',
+                  fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 20),
-                CustomButton(text: 'Log In', onTap: () => _logIn(context)),
-              ],
-            ),
-          ),
-        ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTextField(usernameController, 'Username'),
+                    const SizedBox(height: 16),
+                    _buildTextField(passwordController, 'Password',
+                        obscureText: true,),
+                    const SizedBox(height: 20),
+                    if (state is AuthLoading)
+                      const CircularProgressIndicator(color: Colors.white)
+                    else
+                      CustomButton(
+                        text: 'Log In',
+                        onTap: () {
+                          context.read<AuthCubit>().logIn(
+                                usernameController.text,
+                                passwordController.text,
+                              );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    bool obscureText = false,
-  }) {
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool obscureText = false,}) {
     return TextField(
       controller: controller,
       style: const TextStyle(color: Colors.white),

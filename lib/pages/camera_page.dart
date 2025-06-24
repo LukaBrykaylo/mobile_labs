@@ -1,78 +1,77 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:isolate';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_labs/cubit/camera/camera_cubit.dart';
+import 'package:mobile_labs/cubit/camera/camera_state.dart';
 import 'package:mobile_labs/service/mqtt_services/camera_stream_page.dart';
-import 'package:mobile_labs/service/temp_isolate_service.dart';
 
-class CameraPage extends StatefulWidget {
+class CameraPage extends StatelessWidget {
   const CameraPage({super.key});
+
   @override
-  CameraPageState createState() => CameraPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => CameraCubit()..initialize(),
+      child: const CameraView(),
+    );
+  }
 }
 
-class CameraPageState extends State<CameraPage> {
-  FlutterIsolate? _isolate;
-  SendPort? _isolateSendPort;
-  ReceivePort? _receivePort;
-  late Timer _timer;
-  Map<String, double> _temperatures = {};
-  final _storage = const FlutterSecureStorage();
-  Map<String, String> deviceStreamMap = {};
+class CameraView extends StatelessWidget {
+  const CameraView({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    _loadDeviceStreamMap().then((_) => _startIsolate());
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/elements/photos/background_small.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Column(
+            children: [
+              const SizedBox(height: 90),
+              Expanded(
+                child: BlocBuilder<CameraCubit, CameraState>(
+                  builder: (context, state) {
+                    final names = state.deviceStreamMap.keys.toList();
+
+                    if (names.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No connected cameras',
+                          style: TextStyle(color: Colors.white70, fontSize: 18),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: names.length,
+                      itemBuilder: (_, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildCameraCard(
+                          context,
+                          names[i],
+                          state.temperatures[names[i]] ?? 0.0,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _loadDeviceStreamMap() async {
-    final existing = await _storage.read(key: 'device_stream_map');
-    if (existing != null) {
-      final decoded = jsonDecode(existing);
-      if (decoded is Map) {
-        setState(() {
-          deviceStreamMap =
-              decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
-        });
-      }
-    }
-  }
-
-  Future<void> _startIsolate() async {
-    _receivePort = ReceivePort();
-    _isolate =
-        await FlutterIsolate.spawn(temperatureIsolate, _receivePort!.sendPort);
-    _receivePort!.listen((data) {
-      if (data is SendPort) {
-        _isolateSendPort = data;
-        _startTemperatureUpdates();
-      } else if (data is Map<String, double>) {
-        setState(() => _temperatures = data);
-      }
-    });
-  }
-
-  void _startTemperatureUpdates() {
-    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _isolateSendPort?.send(deviceStreamMap.keys.toList());
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    _receivePort?.close();
-    _isolate?.kill();
-    super.dispose();
-  }
-
-  Widget _buildCameraCard(String name, double temp) {
+  Widget _buildCameraCard(BuildContext context, String name, double temp) {
     return GestureDetector(
-      onTap: () => _onCameraTapped(name),
+      onTap: () => _onCameraTapped(context, name),
       child: Container(
         height: 220,
         decoration: BoxDecoration(
@@ -83,14 +82,39 @@ class CameraPageState extends State<CameraPage> {
         child: Stack(
           children: [
             const Center(
-                child: Icon(Icons.image, color: Colors.white, size: 40),),
+              child: Icon(Icons.image, color: Colors.white, size: 40),
+            ),
             Positioned(
-                bottom: 10, left: 10, child: Text(name, style: _textStyle()),),
-            Positioned(top: 10, right: 10, child: _buildTemperatureBadge(temp)),
+              bottom: 10,
+              left: 10,
+              child: Text(name, style: _textStyle()),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: _buildTemperatureBadge(temp),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _onCameraTapped(BuildContext context, String name) {
+    final topic =
+    context.read<CameraCubit>().state.deviceStreamMap[name];
+    if (topic != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => CameraStreamPage(topic: topic.toString()),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Topic not found for this camera')),
+      );
+    }
   }
 
   TextStyle _textStyle() => const TextStyle(
@@ -100,58 +124,13 @@ class CameraPageState extends State<CameraPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-          color: Colors.black54, borderRadius: BorderRadius.circular(8),),
-      child: Text('${temp.toStringAsFixed(1)}°C',
-          style: const TextStyle(
-              color: Colors.white, fontSize: 14,
-            fontWeight: FontWeight.bold,),),
-    );
-  }
-
-  Future<void> _onCameraTapped(String name) async {
-    final topic = deviceStreamMap[name];
-    if (topic != null) {
-      Navigator.push(context,
-          MaterialPageRoute<void>(builder: (_) =>
-              CameraStreamPage(topic: topic),),);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Topic not found for this camera')),);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final names = deviceStreamMap.keys.toList();
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-              child: Image.asset('lib/elements/photos/background_small.jpg',
-                  fit: BoxFit.cover,),),
-          Column(
-            children: [
-              const SizedBox(height: 90),
-              Expanded(
-                child: names.isEmpty
-                    ? const Center(
-                        child: Text('No connected cameras',
-                            style:
-                                TextStyle(color: Colors.white70,
-                                    fontSize: 18,),),)
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: names.length,
-                        itemBuilder: (_, i) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildCameraCard(
-                              names[i], _temperatures[names[i]] ?? 0.0,),
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ],
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '${temp.toStringAsFixed(1)}°C',
+        style: const TextStyle(
+            color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold,),
       ),
     );
   }

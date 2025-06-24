@@ -1,116 +1,132 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mobile_labs/cubit/profile/profile_cubit.dart';
+import 'package:mobile_labs/cubit/profile/profile_state.dart';
 import 'package:mobile_labs/elements/widget/settings_popup.dart';
 import 'package:mobile_labs/service/auth_service.dart';
 import 'package:mobile_labs/service/network_service.dart';
-import 'package:provider/provider.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
-  ProfilePageState createState() => ProfilePageState();
-}
-
-class ProfilePageState extends State<ProfilePage> {
-  String? _name, _email;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserInfo();
-  }
-
-  Future<void> _loadUserInfo() async {
-    final authService = Provider.of<IAuthService>(context, listen: false);
-    final networkService = Provider.of<NetworkService>(context, listen: false);
-    final userInfo = await authService.getUserInfo();
-    final loggedIn = await authService.isLoggedIn();
-
-    if (loggedIn) {
-      if (!networkService.hasConnection) {
-        Fluttertoast.showToast(
-          msg: 'Logged in offline mode',
-          toastLength: Toast.LENGTH_LONG,
-        );
-      }
-    }
-
-    setState(() {
-      _name = userInfo['name'];
-      _email = userInfo['email'];
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<IAuthService>(context, listen: false);
+    return BlocProvider(
+      create: (_) => ProfileCubit(
+        authService: context.read<IAuthService>(),
+        networkService: context.read<NetworkService>(),
+      ),
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'lib/elements/photos/background_small.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
+            BlocConsumer<ProfileCubit, ProfileState>(
+              listener: (context, state) {
+                if (!state.isLoading &&
+                    state.error == null &&
+                    state.name != null &&
+                    state.email != null) {
+                  final networkService = context.read<NetworkService>();
+                  if (!networkService.hasConnection) {
+                    Fluttertoast.showToast(
+                      msg: 'Logged in offline mode',
+                      toastLength: Toast.LENGTH_LONG,
+                    );
+                  }
+                }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-              child: Image.asset('lib/elements/photos/background_small.jpg',
-                  fit: BoxFit.cover,
-              ),
-          ),
-          Column(
-            children: [
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.settings,
-                            color: Colors.white, size: 28,
-                        ),
-                        onPressed: () => showDialog<void>(
-                            context: context,
-                            barrierColor: Colors.transparent,
-                            builder: (_) => const SettingsPopup(),
+                if (state.loggedOut) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+
+                if (state.error != null) {
+                  Fluttertoast.showToast(
+                    msg: state.error!,
+                    toastLength: Toast.LENGTH_LONG,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return Column(
+                  children: [
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.settings,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              onPressed: () => showDialog<void>(
+                                context: context,
+                                barrierColor: Colors.transparent,
+                                builder: (_) => const SettingsPopup(),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.logout,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              onPressed: () =>
+                                  context.read<ProfileCubit>().logOut(),
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.logout,
-                            color: Colors.white, size: 28,
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.black12,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black54,
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildInfoSection(
+                                  'Name:', state.name ?? 'Unknown',),
+                              const SizedBox(height: 16),
+                              _buildInfoSection(
+                                  'Email:', state.email ?? 'Unknown',),
+                            ],
+                          ),
                         ),
-                        onPressed: () => authService.logOut(context),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.black12,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                            offset: Offset(0, 4),),
-                      ],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildInfoSection('Name:', _name ?? 'Unknown'),
-                        const SizedBox(height: 16),
-                        _buildInfoSection('Email:', _email ?? 'Unknown'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -120,12 +136,13 @@ class ProfilePageState extends State<ProfilePage> {
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 18)),
         const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-            ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
